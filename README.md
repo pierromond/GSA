@@ -1,4 +1,4 @@
-NoiseModelling N4C test case
+GAS test case
 
 Requirements
 

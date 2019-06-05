@@ -201,9 +201,9 @@ class SensitivityProcessData {
                     //srcParameters_n.setSlopePercentage(RSParametersCnossos.computeSlope(Zend, Zstart, the_geom.getLength()))
                     res_d[kk] =  10 * Math.log10(
                             (1.0/24.0)*
-                                    (12*Math.pow(10,(10 * Math.log10(Math.pow(10, EvaluateRoadSourceCnossos.evaluate(srcParameters_d) / 10) + Math.pow(10, res_d[kk] / 10))/10))
-                                    +4* Math.pow(10,(10 * Math.log10(Math.pow(10, EvaluateRoadSourceCnossos.evaluate(srcParameters_e) / 10) + Math.pow(10, res_e[kk] / 10))/10))
-                                    +8* Math.pow(10,(10 * Math.log10(Math.pow(10, EvaluateRoadSourceCnossos.evaluate(srcParameters_n) / 10) + Math.pow(10, res_n[kk] / 10))/10)))
+                                    (12*Math.pow(10,(10 * Math.log10(Math.pow(10, EvaluateRoadSourceCnossos.evaluate(srcParameters_d) / 10) ))/10)
+                                    +4* Math.pow(10,(10 * Math.log10(Math.pow(10, EvaluateRoadSourceCnossos.evaluate(srcParameters_e) / 10) ))/10)
+                                    +8* Math.pow(10,(10 * Math.log10(Math.pow(10, EvaluateRoadSourceCnossos.evaluate(srcParameters_n) / 10) ))/10))
                     )
                     kk++
                 }

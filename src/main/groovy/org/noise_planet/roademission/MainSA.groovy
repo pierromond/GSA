@@ -94,7 +94,7 @@ class MainSA {
 
         // Load roads
         logger.info("Read road geometries and traffic")
-        SHPRead.readShape(connection, "data/ROADS_TRAFFIC_ZONE_CAPTEUR.shp", "ROADS2")
+        SHPRead.readShape(connection, "data/ROADS_TRAFFIC_ZONE_CAPTEUR_250.shp", "ROADS2")
         sql.execute("DROP TABLE ROADS if exists;")
         sql.execute('CREATE TABLE ROADS AS SELECT id, ST_UpdateZ(THE_GEOM, 0.05) the_geom, \n' +
                 'lv_d_speed,mv_d_speed,hv_d_speed,wav_d_spee,wbv_d_spee,\n' +
@@ -123,7 +123,7 @@ class MainSA {
         logger.info("Start time :" + df.format(new Date()))
 
         try {
-            FileInputStream fileInputStream = new FileInputStream(new File(workingDir, "rays0506_250.gz").getAbsolutePath())
+            FileInputStream fileInputStream = new FileInputStream(new File(workingDir, "rays0506_251.gz").getAbsolutePath())
             try {
                 GZIPInputStream gzipInputStream = new GZIPInputStream((fileInputStream), GZIP_CACHE_SIZE)
                 DataInputStream dataInputStream = new DataInputStream(gzipInputStream)

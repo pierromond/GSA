@@ -69,7 +69,7 @@ class Main {
 
         // Load roads
         logger.info("Read road geometries and traffic")
-        SHPRead.readShape(connection, "data/ROADS_TRAFFIC_ZONE_CAPTEUR.shp", "ROADS2")
+        SHPRead.readShape(connection, "data/ROADS_TRAFFIC_ZONE_CAPTEUR_250.shp", "ROADS2")
         sql.execute("DROP TABLE ROADS if exists;")
         sql.execute('CREATE TABLE ROADS AS SELECT id, ST_UpdateZ(THE_GEOM, 0.05) the_geom, \n' +
                         'lv_d_speed,mv_d_speed,hv_d_speed,wav_d_spee,wbv_d_spee,\n' +
@@ -92,7 +92,7 @@ class Main {
 
         // Load Topography
         logger.info("Read topography")
-        SHPRead.readShape(connection, "data/DEM_LITE.shp", "DEM")
+        SHPRead.readShape(connection, "data/DEM_250.shp", "DEM")
         sql.execute("DROP TABLE TOPOGRAPHY if exists;")
         sql.execute("CREATE TABLE TOPOGRAPHY AS SELECT ST_UpdateZ(THE_GEOM, CONTOUR) the_geom from DEM;")
         sql.execute("CREATE SPATIAL INDEX ON TOPOGRAPHY(THE_GEOM)")
@@ -102,12 +102,12 @@ class Main {
         PointNoiseMap pointNoiseMap = new PointNoiseMap("BUILDINGS", "ROADS", "RECEIVERS")
         pointNoiseMap.setSoilTableName("GROUND_TYPE")
         pointNoiseMap.setDemTable("TOPOGRAPHY")
-        pointNoiseMap.setMaximumPropagationDistance(50.0d)
-        pointNoiseMap.setMaximumReflectionDistance(10.0d)
+        pointNoiseMap.setMaximumPropagationDistance(250.0d)
+        pointNoiseMap.setMaximumReflectionDistance(50.0d)
         pointNoiseMap.setWallAbsorption(0.1d)
-        pointNoiseMap.soundReflectionOrder = 0
-        pointNoiseMap.computeHorizontalDiffraction = false
-        pointNoiseMap.computeVerticalDiffraction = false
+        pointNoiseMap.soundReflectionOrder = 1
+        pointNoiseMap.computeHorizontalDiffraction = true
+        pointNoiseMap.computeVerticalDiffraction = true
         pointNoiseMap.setHeightField("HAUTEUR")
         pointNoiseMap.setThreadCount(11) // Use 4 cpu threads
         pointNoiseMap.setReceiverHasAbsoluteZCoordinates(false)
@@ -123,7 +123,7 @@ class Main {
 
         List<ComputeRaysOut.verticeSL> allLevels = new ArrayList<>()
         try {
-            storageFactory.openPathOutputFile(new File("D:\\aumond\\Documents\\CENSE\\LorientMapNoise\\out2\\rays0506_250.gz").absolutePath)
+            storageFactory.openPathOutputFile(new File("D:\\aumond\\Documents\\CENSE\\LorientMapNoise\\out2\\rays0506_251.gz").absolutePath)
             RootProgressVisitor progressLogger = new RootProgressVisitor(2, true, 1)
             pointNoiseMap.initialize(connection, progressLogger)
             progressLogger.endStep()

@@ -131,7 +131,7 @@ class MainSA {
                 int oldIdReceiver = -1
                 int oldIdSource = -1
 
-                FileWriter csvFile = new FileWriter(new File(workingDir, "simu.csv"))
+                FileWriter csvFile = new FileWriter(new File(workingDir, "simu2.csv"))
                 List<double[]> simuSpectrum = new ArrayList<>()
 
                 Map<Integer, List<double[]>>  sourceLevel = new HashMap<>()
@@ -180,9 +180,23 @@ class MainSA {
                             }
                         }
                         if (propagationPaths.size()>0) {
+                            //double[] attenuation = out.computeAttenuation(sensitivityProcessData.getGenericMeteoData(r), idSource, paths.getLi(), idReceiver, propagationPaths)
+                            //double[] soundLevel = sumArray(attenuation, sourceLevel.get(idSource).get(r))
+
                             double[] attenuation = out.computeAttenuation(sensitivityProcessData.getGenericMeteoData(r), idSource, paths.getLi(), idReceiver, propagationPaths)
-                            double[] soundLevel = sumArray(attenuation, sourceLevel.get(idSource).get(r))
-                            simuSpectrum[r] = ComputeRays.sumDbArray(simuSpectrum[r], soundLevel)
+                            double[] soundLevelDay = ComputeRays.wToDba(ComputeRays.multArray(sensitivityProcessData.wjSourcesD.get(idSource).get(r), ComputeRays.dbaToW(attenuation)))
+                            double[] soundLevelEve = ComputeRays.wToDba(ComputeRays.multArray(sensitivityProcessData.wjSourcesE.get(idSource).get(r), ComputeRays.dbaToW(attenuation)))
+                            double[] soundLevelNig = ComputeRays.wToDba(ComputeRays.multArray(sensitivityProcessData.wjSourcesN.get(idSource).get(r), ComputeRays.dbaToW(attenuation)))
+                            double[] lDen = new double[soundLevelDay.length]
+                            double[] lN = new double[soundLevelDay.length]
+                            for(int i = 0; i < soundLevelDay.length; ++i) {
+                                lDen[i] = 10.0D*Math.log10( (12.0D/24.0D)*Math.pow(10.0D, soundLevelDay[i]/10.0D)
+                                        +(4.0D/24.0D)*Math.pow(10.0D, (soundLevelEve[i]+5.0D)/10.0D)
+                                        +(8.0D/24.0D)*Math.pow(10.0D, (soundLevelNig[i]+10.0D)/10.0D))
+                                lN[i] = soundLevelNig[i]
+                            }
+
+                            simuSpectrum[r] = ComputeRays.sumDbArray(simuSpectrum[r], lDen)
                         }
                     }
 

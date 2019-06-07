@@ -37,8 +37,23 @@ class PropagationPathStorage extends ComputeRaysOut {
             receiverId == 11
         }*/
         double[] attenuation = super.computeAttenuation(pathData, sourceId, sourceLi, receiverId, propagationPath)
-        double[] soundLevel = ComputeRays.wToDba(ComputeRays.multArray(inputData.wjSourcesD.get((int)sourceId), ComputeRays.dbaToW(attenuation)))
-        return soundLevel
+        //double[] soundLevel = ComputeRays.wToDba(ComputeRays.multArray(inputData.wjSourcesD.get((int)sourceId), ComputeRays.dbaToW(attenuation)))
+
+
+        double[] soundLevelDay = ComputeRays.wToDba(ComputeRays.multArray(inputData.wjSourcesD.get((int)sourceId), ComputeRays.dbaToW(attenuation)))
+        double[] soundLevelEve = ComputeRays.wToDba(ComputeRays.multArray(inputData.wjSourcesE.get((int)sourceId), ComputeRays.dbaToW(attenuation)))
+        double[] soundLevelNig = ComputeRays.wToDba(ComputeRays.multArray(inputData.wjSourcesN.get((int)sourceId), ComputeRays.dbaToW(attenuation)))
+        double[] lDen = new double[soundLevelDay.length]
+        double[] lN = new double[soundLevelDay.length]
+        for(int i = 0; i < soundLevelDay.length; ++i) {
+            lDen[i] = 10.0D*Math.log10( (12.0D/24.0D)*Math.pow(10.0D, soundLevelDay[i]/10.0D)
+                    +(4.0D/24.0D)*Math.pow(10.0D, (soundLevelEve[i]+5.0D)/10.0D)
+                    +(8.0D/24.0D)*Math.pow(10.0D, (soundLevelNig[i]+10.0D)/10.0D))
+            lN[i] = soundLevelNig[i]
+        }
+
+
+        return lDen
     }
 
     @Override

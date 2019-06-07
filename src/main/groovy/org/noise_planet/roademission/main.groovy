@@ -63,7 +63,7 @@ class Main {
         if(!new File("data/receivers_build_pop.shp").exists()) {
             DbUtilities.createReceiversFromBuildings(sql, "BUILDINGS", "STUDY_AREA")
         } else {
-            SHPRead.readShape(connection, "data/receivers_build_pop.shp", "RECEIVERS")
+            SHPRead.readShape(connection, "data/RecepteursQuestionnaire.shp", "RECEIVERS")
         }
         sql.execute("CREATE SPATIAL INDEX ON RECEIVERS(THE_GEOM)")
 
@@ -109,7 +109,7 @@ class Main {
         pointNoiseMap.computeHorizontalDiffraction = true
         pointNoiseMap.computeVerticalDiffraction = true
         pointNoiseMap.setHeightField("HAUTEUR")
-        pointNoiseMap.setThreadCount(11) // Use 4 cpu threads
+        pointNoiseMap.setThreadCount(10) // Use 4 cpu threads
         pointNoiseMap.setReceiverHasAbsoluteZCoordinates(false)
         pointNoiseMap.setSourceHasAbsoluteZCoordinates(false)
         //pointNoiseMap.setMaximumError(0.0d)
@@ -123,7 +123,7 @@ class Main {
 
         List<ComputeRaysOut.verticeSL> allLevels = new ArrayList<>()
         try {
-            storageFactory.openPathOutputFile(new File("D:\\aumond\\Documents\\CENSE\\LorientMapNoise\\out2\\rays0506_251.gz").absolutePath)
+            storageFactory.openPathOutputFile(new File("D:\\aumond\\Documents\\CENSE\\LorientMapNoise\\out\\rays0706_250.gz").absolutePath)
             RootProgressVisitor progressLogger = new RootProgressVisitor(2, true, 1)
             pointNoiseMap.initialize(connection, progressLogger)
             progressLogger.endStep()
@@ -164,7 +164,7 @@ class Main {
             logger.info("End time :" + df.format(new Date()))
 
             logger.info("Write results to csv file...")
-            CSVWriter writer = new CSVWriter(new FileWriter(workingDir + "/Resultat.csv"))
+            CSVWriter writer = new CSVWriter(new FileWriter(workingDir + "/Resultat0706.csv"))
             for (Map.Entry<Integer, double[]> entry : soundLevels.entrySet()) {
                 Integer key = entry.getKey()
                 double[] value = entry.getValue()

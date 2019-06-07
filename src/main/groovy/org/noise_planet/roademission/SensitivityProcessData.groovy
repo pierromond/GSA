@@ -4,6 +4,7 @@ import groovy.sql.Sql
 import org.locationtech.jts.geom.Geometry
 import org.noise_planet.noisemodelling.emission.EvaluateRoadSourceCnossos
 import org.noise_planet.noisemodelling.emission.RSParametersCnossos
+import org.noise_planet.noisemodelling.propagation.ComputeRays
 import org.noise_planet.noisemodelling.propagation.PropagationProcessPathData
 
 import java.sql.SQLException
@@ -13,6 +14,11 @@ import java.sql.SQLException
  */
 class SensitivityProcessData {
     static public Map<Integer, double[]> soundSourceLevels = new HashMap<>()
+
+    protected  Map<Integer, List<double[]>>  wjSourcesD = new HashMap<>()
+    protected  Map<Integer, List<double[]>>  wjSourcesE = new HashMap<>()
+    protected  Map<Integer, List<double[]>> wjSourcesN = new HashMap<>()
+
     public static PropagationProcessPathData genericMeteoData = new PropagationProcessPathData()
 
     // Init des variables
@@ -156,6 +162,10 @@ class SensitivityProcessData {
             // Ici on calcule les valeurs d'emission par tronçons et par fréquence
 
             List<double[]> sourceLevel2 = new ArrayList<>()
+            List<double[]> sl_res_d = new ArrayList<>()
+            List<double[]> sl_res_e = new ArrayList<>()
+            List<double[]> sl_res_n = new ArrayList<>()
+
             for (int r = 0; r < nSimu; ++r) {
 
                 int kk=0
@@ -165,7 +175,7 @@ class SensitivityProcessData {
 
                 for (f in list) {
                     // fois 0.5 car moitié dans un sens et moitié dans l'autre
-                    String RS = "NL01"
+                    /*String RS = "NL01"
                     switch (R_Road[r]){
                         case 1:
                             RS ="NL01"
@@ -179,16 +189,16 @@ class SensitivityProcessData {
                         case 4 :
                             RS ="NL04"
                             break
-                    }
+                    }*/
                     RSParametersCnossos srcParameters_d = new RSParametersCnossos(lv_d_speed * Speed_d_lv[r], mv_d_speed * Speed_d_mv[r], hv_d_speed * Speed_d_hv[r], wav_d_speed * Speed_d_wav[r], wbv_d_speed * Speed_d_wbv[r],
                             vl_d_per_hour * Deb_d_lv[r] * 0.5, ml_d_per_hour * Deb_d_mv[r] * 0.5, pl_d_per_hour * Deb_d_hv[r] * 0.5, wa_d_per_hour * Deb_d_wav[r] * 0.5, wb_d_per_hour * Deb_d_wbv[r] * 0.5,
-                            f, Tempd_year[r], RS, 0, 0, 250, 1)
+                            f, Tempd_year[r], "NL01", 0, 0, 250, 1)
                      RSParametersCnossos srcParameters_e = new RSParametersCnossos(lv_e_speed * Speed_e_lv[r], mv_e_speed * Speed_e_mv[r], hv_e_speed * Speed_e_hv[r], wav_e_speed * Speed_e_wav[r], wbv_e_speed * Speed_e_wbv[r],
                         vl_e_per_hour * Deb_e_lv[r] * 0.5, ml_e_per_hour * Deb_e_mv[r] * 0.5, pl_e_per_hour * Deb_e_hv[r] * 0.5, wa_e_per_hour * Deb_e_wav[r] * 0.5, wb_e_per_hour * Deb_e_wbv[r] * 0.5,
-                        f, Tempe_year[r], RS, 0, 0, 250, 1)
+                        f, Tempe_year[r], "NL01", 0, 0, 250, 1)
                 RSParametersCnossos srcParameters_n = new RSParametersCnossos(lv_n_speed * Speed_n_lv[r], mv_n_speed * Speed_n_mv[r], hv_n_speed * Speed_n_hv[r], wav_n_speed * Speed_n_wav[r], wbv_n_speed * Speed_n_wbv[r],
                         vl_n_per_hour * Deb_n_lv[r] * 0.5, ml_n_per_hour * Deb_n_mv[r] * 0.5, pl_n_per_hour * Deb_n_hv[r] * 0.5, wa_n_per_hour * Deb_n_wav[r] * 0.5, wb_n_per_hour * Deb_n_wbv[r] * 0.5,
-                        f, Tempn_year[r], RS, 0, 0, 250, 1)
+                        f, Tempn_year[r], "NL01", 0, 0, 250, 1)
 
                     srcParameters_d.setSlopePercentage(RSParametersCnossos.computeSlope(Zstart, Zend, the_geom.getLength()))
                     srcParameters_e.setSlopePercentage(RSParametersCnossos.computeSlope(Zstart, Zend, the_geom.getLength()))
@@ -204,11 +214,21 @@ class SensitivityProcessData {
                                     (12*Math.pow(10,(10 * Math.log10(Math.pow(10, EvaluateRoadSourceCnossos.evaluate(srcParameters_d) / 10) ))/10)
                                     +4* Math.pow(10,(10 * Math.log10(Math.pow(10, EvaluateRoadSourceCnossos.evaluate(srcParameters_e) / 10) ))/10)
                                     +8* Math.pow(10,(10 * Math.log10(Math.pow(10, EvaluateRoadSourceCnossos.evaluate(srcParameters_n) / 10) ))/10))
-                    )
+                            )
+                    res_d[kk] += ComputeRays.dbaToW(EvaluateRoadSourceCnossos.evaluate(srcParameters_d))
+                    res_e[kk] += ComputeRays.dbaToW(EvaluateRoadSourceCnossos.evaluate(srcParameters_e))
+                    res_n[kk] += ComputeRays.dbaToW(EvaluateRoadSourceCnossos.evaluate(srcParameters_n))
+
                     kk++
                 }
+                sl_res_d.add(res_d)
+                sl_res_e.add(res_e)
+                sl_res_n.add(res_n)
                 sourceLevel2.add(res_d)
             }
+            wjSourcesD.put(id,sl_res_d)
+            wjSourcesE.put(id,sl_res_e)
+            wjSourcesN.put(id,sl_res_n)
             sourceLevel.put(id, sourceLevel2)
         }
     return sourceLevel
@@ -272,18 +292,18 @@ void setSensitivityTable(File file) {
         Tempe_year.add(fields[4].toFloat())
         Tempn_year.add(fields[4].toFloat())
 
-        R_Road.add(fields[6].toFloat())
+       // R_Road.add(fields[6].toFloat())
 
         Junc_dist.add(250.0d)
         R_Junc.add((int) 1)
 
-        refl.add(fields[7].toInteger())
-        dif_H.add(fields[8].toInteger())
-        dif_V.add(fields[9].toInteger())
+        refl.add(fields[6].toInteger())
+        dif_H.add(fields[7].toInteger())
+        dif_V.add(fields[8].toInteger())
 
-        Dist.add(fields[9].toFloat())
+        Dist.add(fields[8].toFloat())
 
-        Simu.add(fields[10].toInteger())
+        Simu.add(fields[9].toInteger())
 
         i_read = i_read + 1
     }

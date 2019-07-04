@@ -140,7 +140,6 @@ class TrafficPropagationProcessData extends PropagationProcessData {
         int road_pav = rs.getInt("road_pav")
 
 
-
         double[] res_d = new double[PropagationProcessPathData.freq_lvl.size()]
         double[] res_e = new double[PropagationProcessPathData.freq_lvl.size()]
         double[] res_n = new double[PropagationProcessPathData.freq_lvl.size()]

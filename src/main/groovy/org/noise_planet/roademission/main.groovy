@@ -60,10 +60,10 @@ class Main {
 
         // Load or create receivers points
         sql.execute("DROP TABLE IF EXISTS RECEIVERS")
-        if(!new File("data/receivers_build_pop.shp").exists()) {
+        if(!new File("data/RecepteursQuest.shp").exists()) {
             DbUtilities.createReceiversFromBuildings(sql, "BUILDINGS", "STUDY_AREA")
         } else {
-            SHPRead.readShape(connection, "data/RecepteursQuestionnaire.shp", "RECEIVERS")
+            SHPRead.readShape(connection, "data/RecepteursQuest.shp", "RECEIVERS")
         }
         sql.execute("CREATE SPATIAL INDEX ON RECEIVERS(THE_GEOM)")
 
@@ -102,8 +102,8 @@ class Main {
         PointNoiseMap pointNoiseMap = new PointNoiseMap("BUILDINGS", "ROADS", "RECEIVERS")
         pointNoiseMap.setSoilTableName("GROUND_TYPE")
         pointNoiseMap.setDemTable("TOPOGRAPHY")
-        pointNoiseMap.setMaximumPropagationDistance(250.0d)
-        pointNoiseMap.setMaximumReflectionDistance(50.0d)
+        pointNoiseMap.setMaximumPropagationDistance(500.0d)
+        pointNoiseMap.setMaximumReflectionDistance(100.0d)
         pointNoiseMap.setWallAbsorption(0.1d)
         pointNoiseMap.soundReflectionOrder = 1
         pointNoiseMap.computeHorizontalDiffraction = true
@@ -112,7 +112,7 @@ class Main {
         pointNoiseMap.setThreadCount(10) // Use 4 cpu threads
         pointNoiseMap.setReceiverHasAbsoluteZCoordinates(false)
         pointNoiseMap.setSourceHasAbsoluteZCoordinates(false)
-        //pointNoiseMap.setMaximumError(0.0d)
+        pointNoiseMap.setMaximumError(0.1d)
         PropagationPathStorageFactory storageFactory = new PropagationPathStorageFactory()
         TrafficPropagationProcessDataFactory trafficPropagationProcessDataFactory = new TrafficPropagationProcessDataFactory()
         pointNoiseMap.setPropagationProcessDataFactory(trafficPropagationProcessDataFactory)
@@ -123,7 +123,7 @@ class Main {
 
         List<ComputeRaysOut.verticeSL> allLevels = new ArrayList<>()
         try {
-            storageFactory.openPathOutputFile(new File("D:\\aumond\\Documents\\CENSE\\LorientMapNoise\\out\\rays0706_250.gz").absolutePath)
+            storageFactory.openPathOutputFile(new File("D:\\aumond\\Documents\\CENSE\\LorientMapNoise\\out\\rays1306_500.gz").absolutePath)
             RootProgressVisitor progressLogger = new RootProgressVisitor(2, true, 1)
             pointNoiseMap.initialize(connection, progressLogger)
             progressLogger.endStep()
@@ -164,7 +164,7 @@ class Main {
             logger.info("End time :" + df.format(new Date()))
 
             logger.info("Write results to csv file...")
-            CSVWriter writer = new CSVWriter(new FileWriter(workingDir + "/Resultat0706.csv"))
+            CSVWriter writer = new CSVWriter(new FileWriter(workingDir + "/Resultat1306.csv"))
             for (Map.Entry<Integer, double[]> entry : soundLevels.entrySet()) {
                 Integer key = entry.getKey()
                 double[] value = entry.getValue()
@@ -201,7 +201,7 @@ class Main {
     static double[] DBToDBA(double[] db){
         double[] dbA = [-26.2,-16.1,-8.6,-3.2,0,1.2,1.0,-1.1]
         for(int i = 0; i < db.length; ++i) {
-            db[i] = ComputeRays.wToDba(ComputeRays.dbaToW(db[i]) + ComputeRays.dbaToW(dbA[i]))
+            db[i] = db[i] + dbA[i]
         }
         return db
 

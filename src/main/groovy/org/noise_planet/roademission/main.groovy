@@ -65,6 +65,7 @@ class Main {
         } else {
             SHPRead.readShape(connection, "data/RecepteursQuest.shp", "RECEIVERS")
         }
+        sql.execute('DELETE FROM RECEIVERS WHERE ID <> 41 ;')
         sql.execute("CREATE SPATIAL INDEX ON RECEIVERS(THE_GEOM)")
 
         // Load roads

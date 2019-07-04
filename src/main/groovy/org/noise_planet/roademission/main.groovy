@@ -80,6 +80,9 @@ class Main {
                         'vl_e_per_h,ml_e_per_h,pl_e_per_h,wa_e_per_h,wb_e_per_h,\n' +
                         'vl_n_per_h,ml_n_per_h,pl_n_per_h,wa_n_per_h,wb_n_per_h,\n' +
                         'Zstart,Zend, Juncdist, Junc_type,road_pav FROM ROADS2;')
+
+        sql.execute('DELETE FROM ROADS WHERE ID <> 7865 ;')
+
         sql.execute('ALTER TABLE ROADS ALTER COLUMN ID SET NOT NULL;')
         sql.execute('ALTER TABLE ROADS ADD PRIMARY KEY (ID);')
         sql.execute("CREATE SPATIAL INDEX ON ROADS(THE_GEOM)")
@@ -150,7 +153,16 @@ class Main {
                 int idReceiver = (Integer) allLevels.get(i).receiverId
                 int idSource = (Integer) allLevels.get(i).sourceId
                 double[] soundLevel = allLevels.get(i).value
-                 if (!Double.isNaN(soundLevel[0])) {
+                 if (!Double.isNaN(soundLevel[0])
+                         && !Double.isNaN(soundLevel[1])
+                         && !Double.isNaN(soundLevel[2])
+                         && !Double.isNaN(soundLevel[3])
+                         && !Double.isNaN(soundLevel[4])
+                         && !Double.isNaN(soundLevel[5])
+                         && !Double.isNaN(soundLevel[6])
+                         && !Double.isNaN(soundLevel[7])
+
+                 ) {
                     if (soundLevels.containsKey(idReceiver)) {
                         soundLevel = ComputeRays.sumDbArray(soundLevel, soundLevels.get(idReceiver))
                         soundLevels.replace(idReceiver, soundLevel)

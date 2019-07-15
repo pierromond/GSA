@@ -83,7 +83,7 @@ class PropagationPathStorageFactory implements PointNoiseMap.IComputeRaysOutFact
 
         @Override
         void run() {
-            long exportReceiverRay = 2 // primary key of receiver to export
+            long exportReceiverRay = 1 // primary key of receiver to export
             KMLDocument kmlDocument
 
             ZipOutputStream compressedDoc

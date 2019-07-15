@@ -40,4 +40,15 @@ task runScriptSA(type: JavaExec) {
     }
 }
 
+task runScriptSA(type: JavaExec) {
+    description 'Run NoiseModelling Dynamic Mapping'
+    jvmArgs = ['-Xms2048m']
+    classpath sourceSets.main.runtimeClasspath
+    main = "org.noise_planet.roademission.MainDyn"
+    if (project.hasProperty('workdir')) {
+        // Pass command-line argument to script.
+        args project.getProperty('workdir')
+    }
+}
+
 defaultTasks 'runScript'

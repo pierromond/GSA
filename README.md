@@ -17,7 +17,7 @@ gradlew build
 
 Then run : 
 ```shell
-gradlew gradlew -Pworkdir=out/
+gradlew -Pworkdir=out/
 ```
 
 - Don't forget to create an "out" directory in the main repository

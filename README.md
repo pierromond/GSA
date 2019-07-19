@@ -22,3 +22,5 @@ gradlew gradlew -Pworkdir=out/
 
 -> Don't forget to create an "out" directory in the main repository
 -> The shp must respect the NoiseModelling format
+
+FOr more information, please see : https://github.com/Ifsttar/NoiseModelling/tree/cnossos

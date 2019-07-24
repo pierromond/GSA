@@ -70,7 +70,7 @@ class Main {
 
         // Load roads
         logger.info("Read road geometries and traffic")
-        SHPRead.readShape(connection, "data/Roads4.shp", "ROADS2")
+        SHPRead.readShape(connection, "data/Roads2407.shp", "ROADS2")
 
 
         sql.execute("DROP TABLE ROADS if exists;")
@@ -123,7 +123,7 @@ class Main {
 
         List<ComputeRaysOut.verticeSL> allLevels = new ArrayList<>()
         try {
-            storageFactory.openPathOutputFile(new File("rays2307.gz").absolutePath)
+            storageFactory.openPathOutputFile(new File("rays2407.gz").absolutePath)
             RootProgressVisitor progressLogger = new RootProgressVisitor(2, true, 1)
             pointNoiseMap.initialize(connection, progressLogger)
             progressLogger.endStep()
@@ -173,7 +173,7 @@ class Main {
             logger.info("End time :" + df.format(new Date()))
 
             logger.info("Write results to csv file...")
-            CSVWriter writer = new CSVWriter(new FileWriter(workingDir + "/Resultats2307.csv"))
+            CSVWriter writer = new CSVWriter(new FileWriter(workingDir + "/Resultats2407.csv"))
             for (Map.Entry<Integer, double[]> entry : soundLevels.entrySet()) {
                 Integer key = entry.getKey()
                 double[] value = entry.getValue()

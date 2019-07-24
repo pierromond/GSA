@@ -21,7 +21,7 @@ import java.util.zip.GZIPInputStream
 
 /**
  * To run
- * Just type "gradlew -Pworkdir=out2/"
+ * Just type "./gradlew runScriptSA -Pworkdir=out2/"
  */
 
 @CompileStatic
@@ -87,7 +87,7 @@ class MainSA {
 
         // Load roads
         logger.info("Read road geometries and traffic")
-        SHPRead.readShape(connection, "data/Roads5.shp", "ROADS2")
+        SHPRead.readShape(connection, "data/Roads2407.shp", "ROADS2")
         sql.execute("DROP TABLE ROADS if exists;")
         sql.execute('CREATE TABLE ROADS AS SELECT CAST( OSM_ID AS INTEGER ) OSM_ID , ST_UpdateZ(THE_GEOM, 0.05) THE_GEOM, TMJA_D,TMJA_E,TMJA_N,\n' +
                 'PL_D,PL_E,PL_N,\n' +
@@ -108,7 +108,7 @@ class MainSA {
         logger.info("Start time :" + df.format(new Date()))
 
         try {
-            FileInputStream fileInputStream = new FileInputStream(new File("rays2307.gz").getAbsolutePath())
+            FileInputStream fileInputStream = new FileInputStream(new File("rays2407.gz").getAbsolutePath())
             try {
                 GZIPInputStream gzipInputStream = new GZIPInputStream((fileInputStream), GZIP_CACHE_SIZE)
                 DataInputStream dataInputStream = new DataInputStream(gzipInputStream)
@@ -158,11 +158,12 @@ class MainSA {
 
                         for (int pP= 0; pP< paths.propagationPathList.size(); pP++) {
                             paths.propagationPathList.get(pP).initPropagationPath()
-                            /*if (paths.propagationPathList.get(pP).refPoints.size() <= sensitivityProcessData.refl[r]
+                            /*if (
+                            paths.propagationPathList.get(pP).refPoints.size() <= sensitivityProcessData.refl[r]
                             && paths.propagationPathList.get(pP).difHPoints.size() <= sensitivityProcessData.dif_H[r]
-                            && paths.propagationPathList.get(pP).difVPoints.size() <= sensitivityProcessData.dif_V[r]){
-                                propagationPaths.add(paths.propagationPathList.get(pP))
-                            }*/
+                            && paths.propagationPathList.get(pP).difVPoints.size() <= sensitivityProcessData.dif_V[r]){*/
+                            propagationPaths.add(paths.propagationPathList.get(pP))
+                            //}
                         }
                         if (propagationPaths.size()>0) {
                             //double[] attenuation = out.computeAttenuation(sensitivityProcessData.getGenericMeteoData(r), idSource, paths.getLi(), idReceiver, propagationPaths)

@@ -102,7 +102,7 @@ class Main {
         PointNoiseMap pointNoiseMap = new PointNoiseMap("BUILDINGS", "ROADS", "RECEIVERS")
         pointNoiseMap.setSoilTableName("GROUND_TYPE")
         pointNoiseMap.setDemTable("TOPOGRAPHY")
-        pointNoiseMap.setMaximumPropagationDistance(150.0d)
+        pointNoiseMap.setMaximumPropagationDistance(250.0d)
         pointNoiseMap.setMaximumReflectionDistance(100.0d)
         pointNoiseMap.setWallAbsorption(0.1d)
         pointNoiseMap.soundReflectionOrder = 1

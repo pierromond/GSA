@@ -87,7 +87,7 @@ class MainSA {
 
         // Load roads
         logger.info("Read road geometries and traffic")
-        SHPRead.readShape(connection, "data/Roads3.shp", "ROADS2")
+        SHPRead.readShape(connection, "data/Roads5.shp", "ROADS2")
         sql.execute("DROP TABLE ROADS if exists;")
         sql.execute('CREATE TABLE ROADS AS SELECT CAST( OSM_ID AS INTEGER ) OSM_ID , ST_UpdateZ(THE_GEOM, 0.05) THE_GEOM, TMJA_D,TMJA_E,TMJA_N,\n' +
                 'PL_D,PL_E,PL_N,\n' +

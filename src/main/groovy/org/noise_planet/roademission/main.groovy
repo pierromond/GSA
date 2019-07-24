@@ -65,27 +65,23 @@ class Main {
         } else {
             SHPRead.readShape(connection, "data/RecepteursQuest.shp", "RECEIVERS")
         }
-        sql.execute('DELETE FROM RECEIVERS WHERE ID <> 41 ;')
+
         sql.execute("CREATE SPATIAL INDEX ON RECEIVERS(THE_GEOM)")
 
         // Load roads
         logger.info("Read road geometries and traffic")
-        SHPRead.readShape(connection, "data/ROADS_TRAFFIC_ZONE_CAPTEUR_250.shp", "ROADS2")
+        SHPRead.readShape(connection, "data/Roads4.shp", "ROADS2")
+
+
         sql.execute("DROP TABLE ROADS if exists;")
-        sql.execute('CREATE TABLE ROADS AS SELECT id, ST_UpdateZ(THE_GEOM, 0.05) the_geom, \n' +
-                        'lv_d_speed,mv_d_speed,hv_d_speed,wav_d_spee,wbv_d_spee,\n' +
-                        'lv_e_speed,mv_e_speed,hv_e_speed,wav_e_spee,wbv_e_spee,\n' +
-                        'lv_n_speed,mv_n_speed,hv_n_speed,wav_n_spee,wbv_n_spee,\n' +
-                        'vl_d_per_h,ml_d_per_h,pl_d_per_h,wa_d_per_h,wb_d_per_h,\n' +
-                        'vl_e_per_h,ml_e_per_h,pl_e_per_h,wa_e_per_h,wb_e_per_h,\n' +
-                        'vl_n_per_h,ml_n_per_h,pl_n_per_h,wa_n_per_h,wb_n_per_h,\n' +
-                        'Zstart,Zend, Juncdist, Junc_type,road_pav FROM ROADS2;')
+        sql.execute('CREATE TABLE ROADS AS SELECT CAST( OSM_ID AS INTEGER ) OSM_ID , ST_UpdateZ(THE_GEOM, 0.05) THE_GEOM, TMJA_D,TMJA_E,TMJA_N,\n' +
+                        'PL_D,PL_E,PL_N,\n' +
+                        'LV_SPEE,PV_SPEE, PVMT FROM ROADS2;')
 
-        sql.execute('DELETE FROM ROADS WHERE ID <> 7865 ;')
-
-        sql.execute('ALTER TABLE ROADS ALTER COLUMN ID SET NOT NULL;')
-        sql.execute('ALTER TABLE ROADS ADD PRIMARY KEY (ID);')
+        sql.execute('ALTER TABLE ROADS ALTER COLUMN OSM_ID SET NOT NULL;')
+        sql.execute('ALTER TABLE ROADS ADD PRIMARY KEY (OSM_ID);')
         sql.execute("CREATE SPATIAL INDEX ON ROADS(THE_GEOM)")
+
         logger.info("Road file loaded")
 
         // Load ground type
@@ -106,14 +102,14 @@ class Main {
         PointNoiseMap pointNoiseMap = new PointNoiseMap("BUILDINGS", "ROADS", "RECEIVERS")
         pointNoiseMap.setSoilTableName("GROUND_TYPE")
         pointNoiseMap.setDemTable("TOPOGRAPHY")
-        pointNoiseMap.setMaximumPropagationDistance(500.0d)
+        pointNoiseMap.setMaximumPropagationDistance(150.0d)
         pointNoiseMap.setMaximumReflectionDistance(100.0d)
         pointNoiseMap.setWallAbsorption(0.1d)
         pointNoiseMap.soundReflectionOrder = 1
         pointNoiseMap.computeHorizontalDiffraction = true
         pointNoiseMap.computeVerticalDiffraction = true
         pointNoiseMap.setHeightField("HAUTEUR")
-        pointNoiseMap.setThreadCount(10) // Use 4 cpu threads
+        pointNoiseMap.setThreadCount(8) // Use 4 cpu threads
         pointNoiseMap.setReceiverHasAbsoluteZCoordinates(false)
         pointNoiseMap.setSourceHasAbsoluteZCoordinates(false)
         pointNoiseMap.setMaximumError(0.1d)
@@ -127,7 +123,7 @@ class Main {
 
         List<ComputeRaysOut.verticeSL> allLevels = new ArrayList<>()
         try {
-            storageFactory.openPathOutputFile(new File("D:\\aumond\\Documents\\CENSE\\LorientMapNoise\\out\\rays1306_500.gz").absolutePath)
+            storageFactory.openPathOutputFile(new File("rays2307.gz").absolutePath)
             RootProgressVisitor progressLogger = new RootProgressVisitor(2, true, 1)
             pointNoiseMap.initialize(connection, progressLogger)
             progressLogger.endStep()
@@ -177,7 +173,7 @@ class Main {
             logger.info("End time :" + df.format(new Date()))
 
             logger.info("Write results to csv file...")
-            CSVWriter writer = new CSVWriter(new FileWriter(workingDir + "/Resultat1306.csv"))
+            CSVWriter writer = new CSVWriter(new FileWriter(workingDir + "/Resultats2307.csv"))
             for (Map.Entry<Integer, double[]> entry : soundLevels.entrySet()) {
                 Integer key = entry.getKey()
                 double[] value = entry.getValue()

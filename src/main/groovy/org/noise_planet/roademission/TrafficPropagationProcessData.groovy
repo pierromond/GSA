@@ -101,43 +101,27 @@ class TrafficPropagationProcessData extends PropagationProcessData {
          * @param Junc_type Type of junction ((k = 1 for a crossing with traffic lights ; k = 2 for a roundabout)
          */
         // Compute day average level
+        /*osm_id id, ST_UpdateZ(THE_GEOM, 0.05) the_geom, \n' +
+        'TMJA_D,TMJA_E,TMJA_N,\n' +
+                'PL_D,PL_E,PL_N,\n' +
+                'LV_SPEE,PV_SPEE, PVMT*/
         double[] ld = new double[PropagationProcessPathData.freq_lvl.size()]
         Geometry the_geom = rs.getGeometry("the_geom")
-        double lv_d_speed = rs.getDouble("lv_d_speed")
-        double mv_d_speed = rs.getDouble("mv_d_speed")
-        double hv_d_speed = rs.getDouble("hv_d_speed")
-        double wav_d_speed = rs.getDouble("wav_d_spee")
-        double wbv_d_speed = rs.getDouble("wbv_d_spee")
-        double lv_e_speed = rs.getDouble("lv_e_speed")
-        double mv_e_speed = rs.getDouble("mv_e_speed")
-        double hv_e_speed = rs.getDouble("hv_e_speed")
-        double wav_e_speed = rs.getDouble("wav_e_spee")
-        double wbv_e_speed = rs.getDouble("wbv_e_spee")
-        double lv_n_speed =rs.getDouble("lv_n_speed")
-        double mv_n_speed = rs.getDouble("mv_n_speed")
-        double hv_n_speed = rs.getDouble("hv_n_speed")
-        double wav_n_speed =rs.getDouble("wav_n_spee")
-        double wbv_n_speed = rs.getDouble("wbv_n_spee")
-        double vl_d_per_hour = rs.getDouble("vl_d_per_h")
-        double ml_d_per_hour =rs.getDouble("ml_d_per_h")
-        double pl_d_per_hour = rs.getDouble("pl_d_per_h")
-        double wa_d_per_hour = rs.getDouble("wa_d_per_h")
-        double wb_d_per_hour =rs.getDouble("wb_d_per_h")
-        double vl_e_per_hour = rs.getDouble("vl_e_per_h")
-        double ml_e_per_hour = rs.getDouble("ml_e_per_h")
-        double pl_e_per_hour = rs.getDouble("pl_e_per_h")
-        double wa_e_per_hour = rs.getDouble("wa_e_per_h")
-        double wb_e_per_hour = rs.getDouble("wb_e_per_h")
-        double vl_n_per_hour =rs.getDouble("vl_n_per_h")
-        double ml_n_per_hour = rs.getDouble("ml_n_per_h")
-        double pl_n_per_hour = rs.getDouble("pl_n_per_h")
-        double wa_n_per_hour = rs.getDouble("wa_n_per_h")
-        double wb_n_per_hour = rs.getDouble("wb_n_per_h")
-        double Zstart = rs.getDouble("Zstart")
-        double Zend =rs.getDouble("Zend")
-        double Juncdist = rs.getDouble("Juncdist")
-        int Junc_type = rs.getInt("Junc_type")
-        int road_pav = rs.getInt("road_pav")
+        double lv_speed = rs.getDouble("LV_SPEE")
+        double hv_speed = rs.getDouble("PV_SPEE")
+
+        double TMJA_d_per_hour = rs.getDouble("TMJA_D")
+        double pl_d_per_hour = rs.getDouble("PL_D")/100
+        double TMJA_e_per_hour = rs.getDouble("TMJA_E")
+        double pl_e_per_hour = rs.getDouble("PL_E")/100
+        double TMJA_n_per_hour =rs.getDouble("TMJA_N")
+        double pl_n_per_hour = rs.getDouble("PL_N")/100
+
+        double Zstart = 0
+        double Zend =0
+        double Juncdist = 250
+        int Junc_type = 1
+        String road_pav = rs.getString("PVMT")
 
 
         double[] res_d = new double[PropagationProcessPathData.freq_lvl.size()]
@@ -147,15 +131,15 @@ class TrafficPropagationProcessData extends PropagationProcessData {
 
         int idFreq  = 0
         for(int freq : PropagationProcessPathData.freq_lvl) {
-            RSParametersCnossos srcParameters_d = new RSParametersCnossos(lv_d_speed, mv_d_speed, hv_d_speed, wav_d_speed, wbv_d_speed,
-                    vl_d_per_hour , ml_d_per_hour , pl_d_per_hour , wa_d_per_hour , wb_d_per_hour ,
-                    freq, 20.0d, "NL01", 0, 0, 200.0d, Junc_type)
-            RSParametersCnossos srcParameters_e = new RSParametersCnossos(lv_e_speed, mv_e_speed, hv_e_speed, wav_e_speed, wbv_e_speed,
-                    vl_e_per_hour , ml_e_per_hour , pl_e_per_hour , wa_e_per_hour , wb_e_per_hour ,
-                    freq, 20.0d, "NL01", 0, 0, 200.0d, Junc_type)
-            RSParametersCnossos srcParameters_n = new RSParametersCnossos(lv_n_speed, mv_n_speed, hv_n_speed, wav_n_speed, wbv_n_speed,
-                    vl_n_per_hour , ml_n_per_hour , pl_n_per_hour , wa_n_per_hour , wb_n_per_hour ,
-                    freq, 20.0d, "NL01", 0, 0, 200.0d, Junc_type)
+            RSParametersCnossos srcParameters_d = new RSParametersCnossos(lv_speed, 0.0d, hv_speed, 0.0d, 0.0d,
+                    TMJA_d_per_hour -TMJA_d_per_hour*pl_d_per_hour , 0.0d , TMJA_d_per_hour*pl_d_per_hour , 0.0d , 0.0d ,
+                    freq, 20.0d, road_pav, 0, 0, 200.0d, Junc_type)
+            RSParametersCnossos srcParameters_e = new RSParametersCnossos(lv_speed, 0.0d, hv_speed, 0.0d, 0.0d,
+                    TMJA_e_per_hour-TMJA_e_per_hour*pl_e_per_hour , 0.0d , TMJA_e_per_hour*pl_e_per_hour , 0.0d , 0.0d ,
+                    freq, 20.0d, road_pav, 0, 0, 200.0d, Junc_type)
+            RSParametersCnossos srcParameters_n = new RSParametersCnossos(lv_speed, 0.0d, hv_speed, 0.0d, 0.0d,
+                    TMJA_n_per_hour-pl_n_per_hour*TMJA_n_per_hour , 0.0d , pl_n_per_hour*TMJA_n_per_hour , 0.0d , 0.0d ,
+                    freq, 20.0d, road_pav, 0, 0, 200.0d, Junc_type)
 
             srcParameters_d.setSlopePercentage(RSParametersCnossos.computeSlope(Zstart, Zend, the_geom.getLength()))
             srcParameters_e.setSlopePercentage(RSParametersCnossos.computeSlope(Zstart, Zend, the_geom.getLength()))

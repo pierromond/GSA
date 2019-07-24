@@ -48,6 +48,7 @@ class MainSA {
         Connection connection = SFSUtilities.wrapConnection(DbUtilities.createSpatialDataBase(dbName, true))
         Sql sql = new Sql(connection)
 
+        File dest2 = new File("data/Exp_comp1m.csv")
 
         int nvar = 0 // pas toucher
         int nr = 0 // pas toucher
@@ -55,16 +56,8 @@ class MainSA {
         int n_comp = 0 // pas toucher
         int i_read = 1   //nombre de lignes d'entête
 
-        // copier les fichiers dans le repertoire Results
-        File source = new File("D:\\aumond\\Documents\\CENSE\\WP2\\Analyses\\Incertitudes\\Incertitudes\\Config.csv")
-        File dest = new File(workingDir + "\\Config.csv")
-        copyFileUsingStream(source, dest)
-        File source2 = new File("D:\\aumond\\Documents\\CENSE\\WP2\\Analyses\\Incertitudes\\Incertitudes\\Exp_comp1m.csv")
-        File dest2 = new File(workingDir + "\\Exp_comp1m.csv")
-        copyFileUsingStream(source2, dest2)
-
         // lire les 4 premieres lignes de config
-        new File("D:\\aumond\\Documents\\CENSE\\WP2\\Analyses\\Incertitudes\\Incertitudes\\Config.csv").splitEachLine(",") {
+        new File("data/Config.csv").splitEachLine(",") {
             fields ->
                 switch (i_read) {
                     case 1:
@@ -83,7 +76,7 @@ class MainSA {
         // Evaluate receiver points using provided buildings
         logger.info("Read Sources")
         sql.execute("DROP TABLE IF EXISTS RECEIVERS")
-        SHPRead.readShape(connection, "data/receivers_build_pop.shp", "RECEIVERS")
+        SHPRead.readShape(connection, "data/RecepteursQuest.shp", "RECEIVERS")
 
         HashMap<Integer,Double> pop = new HashMap<>()
         // memes valeurs d e et n
@@ -94,24 +87,16 @@ class MainSA {
 
         // Load roads
         logger.info("Read road geometries and traffic")
-        SHPRead.readShape(connection, "data/ROADS_TRAFFIC_ZONE_CAPTEUR_250.shp", "ROADS2")
+        SHPRead.readShape(connection, "data/Roads3.shp", "ROADS2")
         sql.execute("DROP TABLE ROADS if exists;")
-        sql.execute('CREATE TABLE ROADS AS SELECT id, ST_UpdateZ(THE_GEOM, 0.05) the_geom, \n' +
-                'lv_d_speed,mv_d_speed,hv_d_speed,wav_d_spee,wbv_d_spee,\n' +
-                'lv_e_speed,mv_e_speed,hv_e_speed,wav_e_spee,wbv_e_spee,\n' +
-                'lv_n_speed,mv_n_speed,hv_n_speed,wav_n_spee,wbv_n_spee,\n' +
-                'vl_d_per_h,ml_d_per_h,pl_d_per_h,wa_d_per_h,wb_d_per_h,\n' +
-                'vl_e_per_h,ml_e_per_h,pl_e_per_h,wa_e_per_h,wb_e_per_h,\n' +
-                'vl_n_per_h,ml_n_per_h,pl_n_per_h,wa_n_per_h,wb_n_per_h,\n' +
-                'Zstart,Zend, Juncdist, Junc_type,road_pav FROM ROADS2;')
-        sql.execute('ALTER TABLE ROADS ALTER COLUMN ID SET NOT NULL;')
-        sql.execute('ALTER TABLE ROADS ADD PRIMARY KEY (ID);')
+        sql.execute('CREATE TABLE ROADS AS SELECT CAST( OSM_ID AS INTEGER ) OSM_ID , ST_UpdateZ(THE_GEOM, 0.05) THE_GEOM, TMJA_D,TMJA_E,TMJA_N,\n' +
+                'PL_D,PL_E,PL_N,\n' +
+                'LV_SPEE,PV_SPEE, PVMT FROM ROADS2;')
+        sql.execute('ALTER TABLE ROADS ALTER COLUMN OSM_ID SET NOT NULL;')
+        sql.execute('ALTER TABLE ROADS ADD PRIMARY KEY (OSM_ID);')
         sql.execute("CREATE SPATIAL INDEX ON ROADS(THE_GEOM)")
+
         logger.info("Road file loaded")
-
-
-
-
 
         List<ComputeRaysOut.verticeSL> allLevels = new ArrayList<>()
 
@@ -123,7 +108,7 @@ class MainSA {
         logger.info("Start time :" + df.format(new Date()))
 
         try {
-            FileInputStream fileInputStream = new FileInputStream(new File(workingDir, "rays0506_251.gz").getAbsolutePath())
+            FileInputStream fileInputStream = new FileInputStream(new File("rays2307.gz").getAbsolutePath())
             try {
                 GZIPInputStream gzipInputStream = new GZIPInputStream((fileInputStream), GZIP_CACHE_SIZE)
                 DataInputStream dataInputStream = new DataInputStream(gzipInputStream)
@@ -173,11 +158,11 @@ class MainSA {
 
                         for (int pP= 0; pP< paths.propagationPathList.size(); pP++) {
                             paths.propagationPathList.get(pP).initPropagationPath()
-                            if (paths.propagationPathList.get(pP).refPoints.size() <= sensitivityProcessData.refl[r]
+                            /*if (paths.propagationPathList.get(pP).refPoints.size() <= sensitivityProcessData.refl[r]
                             && paths.propagationPathList.get(pP).difHPoints.size() <= sensitivityProcessData.dif_H[r]
                             && paths.propagationPathList.get(pP).difVPoints.size() <= sensitivityProcessData.dif_V[r]){
                                 propagationPaths.add(paths.propagationPathList.get(pP))
-                            }
+                            }*/
                         }
                         if (propagationPaths.size()>0) {
                             //double[] attenuation = out.computeAttenuation(sensitivityProcessData.getGenericMeteoData(r), idSource, paths.getLi(), idReceiver, propagationPaths)

@@ -3,14 +3,12 @@ package org.noise_planet.roademission
 import com.opencsv.CSVWriter
 import groovy.sql.Sql
 import groovy.transform.CompileStatic
-import org.h2gis.api.EmptyProgressVisitor
 import org.h2gis.api.ProgressVisitor
 import org.h2gis.functions.io.shp.SHPRead
 import org.h2gis.utilities.SFSUtilities
 import org.noise_planet.noisemodelling.propagation.ComputeRays
 import org.noise_planet.noisemodelling.propagation.ComputeRaysOut
 import org.noise_planet.noisemodelling.propagation.IComputeRaysOut
-import org.noise_planet.noisemodelling.propagation.PropagationPath
 import org.noise_planet.noisemodelling.propagation.RootProgressVisitor
 import org.noise_planet.noisemodelling.propagation.jdbc.PointNoiseMap
 import org.slf4j.Logger
@@ -18,7 +16,6 @@ import org.slf4j.LoggerFactory
 
 import java.sql.Connection
 import java.text.DateFormat
-import java.text.DecimalFormat
 import java.text.SimpleDateFormat
 
 /**
@@ -26,7 +23,7 @@ import java.text.SimpleDateFormat
  * Just type "gradlew -Pworkdir=out/"
  */
 @CompileStatic
-class Main {
+class MainProba {
     static void main(String[] args) {
         // Read working directory argument
         String workingDir = ""
@@ -35,7 +32,7 @@ class Main {
         }
 
         // Init output logger
-        Logger logger = LoggerFactory.getLogger(Main.class)
+        Logger logger = LoggerFactory.getLogger(MainProba.class)
         logger.info(String.format("Working directory is %s", new File(workingDir).getAbsolutePath()))
 
 
@@ -70,19 +67,9 @@ class Main {
 
         // Load roads
         logger.info("Read road geometries and traffic")
-        // ICA 2019 - Sensitivity
-        SHPRead.readShape(connection, "data/Roads2407.shp", "ROADS2")
-
-
-        sql.execute("DROP TABLE ROADS if exists;")
-        sql.execute('CREATE TABLE ROADS AS SELECT CAST( OSM_ID AS INTEGER ) OSM_ID , ST_UpdateZ(THE_GEOM, 0.05) THE_GEOM, TMJA_D,TMJA_E,TMJA_N,\n' +
-                        'PL_D,PL_E,PL_N,\n' +
-                        'LV_SPEE,PV_SPEE, PVMT FROM ROADS2;')
-
-        sql.execute('ALTER TABLE ROADS ALTER COLUMN OSM_ID SET NOT NULL;')
-        sql.execute('ALTER TABLE ROADS ADD PRIMARY KEY (OSM_ID);')
-        sql.execute("CREATE SPATIAL INDEX ON ROADS(THE_GEOM)")
-
+        // ICA 2019 - Questionnaire
+        SHPRead.readShape(connection, "data/CARS.shp", "CARS")
+        sql.execute("CREATE SPATIAL INDEX ON CARS(THE_GEOM)")
         logger.info("Road file loaded")
 
         // Load ground type
@@ -100,23 +87,23 @@ class Main {
         logger.info("Topography file loaded")
 
         // Init NoiseModelling
-        PointNoiseMap pointNoiseMap = new PointNoiseMap("BUILDINGS", "ROADS", "RECEIVERS")
+        PointNoiseMap pointNoiseMap = new PointNoiseMap("BUILDINGS", "CARS", "RECEIVERS")
         pointNoiseMap.setSoilTableName("GROUND_TYPE")
         pointNoiseMap.setDemTable("TOPOGRAPHY")
-        pointNoiseMap.setMaximumPropagationDistance(300.0d)
-        pointNoiseMap.setMaximumReflectionDistance(100.0d)
+        pointNoiseMap.setMaximumPropagationDistance(120.0d) // 300 ICA sensitivity
+        pointNoiseMap.setMaximumReflectionDistance(50.0d) // 100 ICA sensitivity
         pointNoiseMap.setWallAbsorption(0.1d)
-        pointNoiseMap.soundReflectionOrder = 1
-        pointNoiseMap.computeHorizontalDiffraction = true
-        pointNoiseMap.computeVerticalDiffraction = true
+        pointNoiseMap.soundReflectionOrder = 0
+        pointNoiseMap.computeHorizontalDiffraction = false
+        pointNoiseMap.computeVerticalDiffraction = false
         pointNoiseMap.setHeightField("HAUTEUR")
         pointNoiseMap.setThreadCount(8) // Use 4 cpu threads
         pointNoiseMap.setReceiverHasAbsoluteZCoordinates(false)
         pointNoiseMap.setSourceHasAbsoluteZCoordinates(false)
         pointNoiseMap.setMaximumError(0.1d)
         PropagationPathStorageFactory storageFactory = new PropagationPathStorageFactory()
-        TrafficPropagationProcessDataFactory trafficPropagationProcessDataFactory = new TrafficPropagationProcessDataFactory()
-        pointNoiseMap.setPropagationProcessDataFactory(trafficPropagationProcessDataFactory)
+        ProbaPropagationProcessDataFactory probaPropagationProcessDataFactory = new ProbaPropagationProcessDataFactory()
+        pointNoiseMap.setPropagationProcessDataFactory(probaPropagationProcessDataFactory)
         pointNoiseMap.setComputeRaysOutFactory(storageFactory)
         storageFactory.setWorkingDir(workingDir)
 
@@ -124,7 +111,7 @@ class Main {
 
         List<ComputeRaysOut.verticeSL> allLevels = new ArrayList<>()
         try {
-            storageFactory.openPathOutputFile(new File("rays2407.gz").absolutePath)
+            storageFactory.openPathOutputFile(new File("raysProba.gz").absolutePath)
             RootProgressVisitor progressLogger = new RootProgressVisitor(2, true, 1)
             pointNoiseMap.initialize(connection, progressLogger)
             progressLogger.endStep()
@@ -144,7 +131,54 @@ class Main {
 
             logger.info("Compute results by receivers...")
 
-            Map<Integer, double[]> soundLevels = new HashMap<>()
+
+            DynamicProcessData dynamicProcessData = new DynamicProcessData()
+
+
+
+            logger.info("End time :" + df.format(new Date()))
+
+
+
+            logger.info("Write results to csv file...")
+            CSVWriter writer = new CSVWriter(new FileWriter(workingDir + "/ResultatsProba2.csv"))
+
+            for (int t=0;t<100;t++){
+                Map<Integer, double[]> soundLevels = new HashMap<>()
+                for (int i=0;i< allLevels.size() ; i++) {
+                    int idReceiver = (Integer) allLevels.get(i).receiverId
+                    int idSource = (Integer) allLevels.get(i).sourceId
+                    double[] soundLevel = allLevels.get(i).value
+                    double[] sourceLev = dynamicProcessData.getCarsLevel("CARS", sql, t,idSource)
+
+
+                    if (sourceLev[0]>0){
+                        if (soundLevels.containsKey(idReceiver)) {
+                            soundLevel = ComputeRays.sumDbArray(sumLinearArray(soundLevel,sourceLev), soundLevels.get(idReceiver))
+                            soundLevels.replace(idReceiver, soundLevel)
+                        } else {
+                            soundLevels.put(idReceiver, sumLinearArray(soundLevel,sourceLev))
+                        }
+
+
+                        // closing writer connection
+
+                    }
+                }
+                for (Map.Entry<Integer, double[]> entry : soundLevels.entrySet()) {
+                    Integer key = entry.getKey()
+                    double[] value = entry.getValue()
+                    value = DBToDBA(value)
+                    writer.writeNext([key.toString(),t.toString(), ComputeRays.wToDba(ComputeRays.sumArray(ComputeRays.dbaToW(value))).toString()] as String[])
+                }
+            }
+            writer.close()
+
+
+            Map<Integer, double[]> soundLevels2 = new HashMap<>()
+
+            logger.info("Write results to csv file...")
+            CSVWriter writer2 = new CSVWriter(new FileWriter(workingDir + "/ResultatsProba.csv"))
 
             for (int i=0;i< allLevels.size() ; i++) {
                 int idReceiver = (Integer) allLevels.get(i).receiverId
@@ -160,29 +194,25 @@ class Main {
                          && !Double.isNaN(soundLevel[7])
 
                  ) {
-                    if (soundLevels.containsKey(idReceiver)) {
+
+                     writer2.writeNext([idReceiver,idSource, DBToDBA(soundLevel)] as String[])
+
+
+
+                   /* if (soundLevels.containsKey(idReceiver)) {
                         soundLevel = ComputeRays.sumDbArray(soundLevel, soundLevels.get(idReceiver))
                         soundLevels.replace(idReceiver, soundLevel)
                     } else {
                         soundLevels.put(idReceiver, soundLevel)
-                    }
+                    }*/
                 } else {
                      logger.info("NaN on Rec :" + idReceiver + "and Src :" + idSource)
                  }
             }
 
             logger.info("End time :" + df.format(new Date()))
+            writer2.close()
 
-            logger.info("Write results to csv file...")
-            CSVWriter writer = new CSVWriter(new FileWriter(workingDir + "/Resultats2407.csv"))
-            for (Map.Entry<Integer, double[]> entry : soundLevels.entrySet()) {
-                Integer key = entry.getKey()
-                double[] value = entry.getValue()
-                value = DBToDBA(value)
-                writer.writeNext([key.toString(), ComputeRays.wToDba(ComputeRays.sumArray(ComputeRays.dbaToW(value))).toString()] as String[])
-            }
-            // closing writer connection
-            writer.close()
 
 
             /*sql.execute("drop table if exists receiver_lvl_day_zone, receiver_lvl_evening_zone, receiver_lvl_night_zone;")
@@ -215,6 +245,19 @@ class Main {
         }
         return db
 
+    }
+    static double[] sumLinearArray(double[] array1, double[] array2) {
+        if (array1.length != array2.length) {
+            throw new IllegalArgumentException("Not same size array")
+        } else {
+            double[] sum = new double[array1.length]
+
+            for(int i = 0; i < array1.length; ++i) {
+                sum[i] = array1[i] + array2[i]
+            }
+
+            return sum;
+        }
     }
 
 }

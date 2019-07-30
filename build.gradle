@@ -29,11 +29,34 @@ task runScript(type: JavaExec) {
     }
 }
 
+task runScriptProba(type: JavaExec) {
+    description 'Run NoiseModelling Probabilistic Framework'
+    jvmArgs = ['-Xms2048m']
+    classpath sourceSets.main.runtimeClasspath
+    main = "org.noise_planet.roademission.MainProba"
+    if (project.hasProperty('workdir')) {
+        // Pass command-line argument to script.
+        args project.getProperty('workdir')
+    }
+}
+
+task runScriptSA(type: JavaExec) {
+    description 'Run NoiseModelling Proba Process'
+    jvmArgs = ['-Xms2048m']
+    classpath sourceSets.main.runtimeClasspath
+    main = "org.noise_planet.roademission.ProbaProcess"
+    if (project.hasProperty('workdir')) {
+        // Pass command-line argument to script.
+        args project.getProperty('workdir')
+    }
+}
+
+
 task runScriptSA(type: JavaExec) {
     description 'Run NoiseModelling Sensitivy Analysis'
     jvmArgs = ['-Xms2048m']
     classpath sourceSets.main.runtimeClasspath
-    main = "org.noise_planet.roademission.MainSA"
+    main = "org.noise_planet.roademission.SensitivityProcess"
     if (project.hasProperty('workdir')) {
         // Pass command-line argument to script.
         args project.getProperty('workdir')

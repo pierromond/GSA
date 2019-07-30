@@ -1,16 +1,10 @@
 package org.noise_planet.roademission
 
-import com.opencsv.CSVWriter
 import groovy.sql.Sql
 import groovy.transform.CompileStatic
-import org.h2.table.Table
-import org.h2gis.api.ProgressVisitor
 import org.h2gis.functions.io.shp.SHPRead
 import org.h2gis.utilities.SFSUtilities
-import org.noise_planet.noisemodelling.emission.EvaluateRoadSourceCnossos
-import org.noise_planet.noisemodelling.emission.RSParametersCnossos
 import org.noise_planet.noisemodelling.propagation.*
-import org.noise_planet.noisemodelling.propagation.jdbc.PointNoiseMap
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -25,7 +19,7 @@ import java.util.zip.GZIPInputStream
  */
 
 @CompileStatic
-class MainSA {
+class SensitivityProcess {
     public static SensitivityProcessData sensitivityProcessData = new SensitivityProcessData()
 
     static void main(String[] args) {
@@ -36,7 +30,7 @@ class MainSA {
         }
 
         // Init output logger
-        Logger logger = LoggerFactory.getLogger(MainSA.class)
+        Logger logger = LoggerFactory.getLogger(SensitivityProcess.class)
         logger.info(String.format("Working directory is %s", new File(workingDir).getAbsolutePath()))
 
         // Create spatial database
@@ -129,10 +123,13 @@ class MainSA {
                 System.out.println(timeStart2-timeStart)
                 logger.info("End Emission time :" + df.format(new Date()))
                 System.out.println("Run SA")
+                long computationTime = 0
+                long startSimulationTime = System.currentTimeMillis()
                 while (fileInputStream.available() > 0) {
 
                     PointToPointPaths paths = new PointToPointPaths()
                     paths.readPropagationPathListStream(dataInputStream)
+                    long startComputationTime = System.currentTimeMillis()
                     int idReceiver = (Integer) paths.receiverId
                     int idSource = (Integer) paths.sourceId
 
@@ -153,23 +150,33 @@ class MainSA {
                     oldIdReceiver = idReceiver
                     ComputeRaysOut out = new ComputeRaysOut(false, sensitivityProcessData.getGenericMeteoData(0))
                     //double[] attenuation = out.computeAttenuation(sensitivityProcessData.getGenericMeteoData(r), idSource, paths.getLi(), idReceiver, propagationPaths)
+                    double[] attenuation = null
+                    List<PropagationPath> propagationPaths = new ArrayList<>()
                     for (int r = 0; r < nSimu; r++) {
-                        List<PropagationPath> propagationPaths = new ArrayList<>()
+                        if (r ==0){
 
-                        for (int pP= 0; pP< paths.propagationPathList.size(); pP++) {
-                            paths.propagationPathList.get(pP).initPropagationPath()
-                            /*if (
-                            paths.propagationPathList.get(pP).refPoints.size() <= sensitivityProcessData.refl[r]
-                            && paths.propagationPathList.get(pP).difHPoints.size() <= sensitivityProcessData.dif_H[r]
-                            && paths.propagationPathList.get(pP).difVPoints.size() <= sensitivityProcessData.dif_V[r]){*/
-                            propagationPaths.add(paths.propagationPathList.get(pP))
-                            //}
+                            for (int pP= 0; pP< paths.propagationPathList.size(); pP++) {
+
+                                paths.propagationPathList.get(pP).initPropagationPath()
+                                /*if (
+                                paths.propagationPathList.get(pP).refPoints.size() <= sensitivityProcessData.refl[r]
+                                && paths.propagationPathList.get(pP).difHPoints.size() <= sensitivityProcessData.dif_H[r]
+                                && paths.propagationPathList.get(pP).difVPoints.size() <= sensitivityProcessData.dif_V[r]){*/
+                                propagationPaths.add(paths.propagationPathList.get(pP))
+                                //}
+                            }
                         }
                         if (propagationPaths.size()>0) {
                             //double[] attenuation = out.computeAttenuation(sensitivityProcessData.getGenericMeteoData(r), idSource, paths.getLi(), idReceiver, propagationPaths)
                             //double[] soundLevel = sumArray(attenuation, sourceLevel.get(idSource).get(r))
+                            if (r>0){
+                                if (sensitivityProcessData.Temp[r]!=sensitivityProcessData.Temp[r-1]){
+                                    attenuation = out.computeAttenuation(sensitivityProcessData.getGenericMeteoData(r), idSource, paths.getLi(), idReceiver, propagationPaths)
+                                }
+                            }else{
+                                attenuation = out.computeAttenuation(sensitivityProcessData.getGenericMeteoData(r), idSource, paths.getLi(), idReceiver, propagationPaths)
+                            }
 
-                            double[] attenuation = out.computeAttenuation(sensitivityProcessData.getGenericMeteoData(r), idSource, paths.getLi(), idReceiver, propagationPaths)
                             double[] soundLevelDay = ComputeRays.wToDba(ComputeRays.multArray(sensitivityProcessData.wjSourcesD.get(idSource).get(r), ComputeRays.dbaToW(attenuation)))
                             double[] soundLevelEve = ComputeRays.wToDba(ComputeRays.multArray(sensitivityProcessData.wjSourcesE.get(idSource).get(r), ComputeRays.dbaToW(attenuation)))
                             double[] soundLevelNig = ComputeRays.wToDba(ComputeRays.multArray(sensitivityProcessData.wjSourcesN.get(idSource).get(r), ComputeRays.dbaToW(attenuation)))
@@ -185,8 +192,12 @@ class MainSA {
                             simuSpectrum[r] = ComputeRays.sumDbArray(simuSpectrum[r], lDen)
                         }
                     }
-
+                    computationTime += System.currentTimeMillis() - startComputationTime
                 }
+
+                logger.info("ComputationTime :" + computationTime.toString() )
+                logger.info("SimulationTime :" + (System.currentTimeMillis() - startSimulationTime).toString() )
+
                 csvFile.close()
                 logger.info("End time :" + df.format(new Date()))
 

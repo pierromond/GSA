@@ -17,12 +17,12 @@ import java.util.concurrent.ConcurrentLinkedDeque
  */
 class PropagationPathStorage extends ComputeRaysOut {
     // Thread safe queue object
-    protected TrafficPropagationProcessData inputData
+    protected ProbaPropagationProcessData inputData
     ConcurrentLinkedDeque<PointToPointPaths> pathQueue
 
     PropagationPathStorage(PropagationProcessData inputData, PropagationProcessPathData pathData, ConcurrentLinkedDeque<PointToPointPaths> pathQueue) {
         super(false, pathData, inputData)
-        this.inputData = (TrafficPropagationProcessData)inputData
+        this.inputData = (ProbaPropagationProcessData)inputData
         this.pathQueue = pathQueue
     }
 
@@ -37,23 +37,13 @@ class PropagationPathStorage extends ComputeRaysOut {
             receiverId == 11
         }*/
         double[] attenuation = super.computeAttenuation(pathData, sourceId, sourceLi, receiverId, propagationPath)
-        //double[] soundLevel = ComputeRays.wToDba(ComputeRays.multArray(inputData.wjSourcesD.get((int)sourceId), ComputeRays.dbaToW(attenuation)))
 
-
-        double[] soundLevelDay = ComputeRays.wToDba(ComputeRays.multArray(inputData.wjSourcesD.get((int)sourceId), ComputeRays.dbaToW(attenuation)))
-        double[] soundLevelEve = ComputeRays.wToDba(ComputeRays.multArray(inputData.wjSourcesE.get((int)sourceId), ComputeRays.dbaToW(attenuation)))
-        double[] soundLevelNig = ComputeRays.wToDba(ComputeRays.multArray(inputData.wjSourcesN.get((int)sourceId), ComputeRays.dbaToW(attenuation)))
-        double[] lDen = new double[soundLevelDay.length]
-        double[] lN = new double[soundLevelDay.length]
+        /*double[] soundLevelDay = ComputeRays.wToDba(ComputeRays.multArray(inputData.wjSourcesD.get((int)sourceId), ComputeRays.dbaToW(attenuation)))
+        double[] l = new double[soundLevelDay.length]
         for(int i = 0; i < soundLevelDay.length; ++i) {
-            lDen[i] = 10.0D*Math.log10( (12.0D/24.0D)*Math.pow(10.0D, soundLevelDay[i]/10.0D)
-                    +(4.0D/24.0D)*Math.pow(10.0D, (soundLevelEve[i]+5.0D)/10.0D)
-                    +(8.0D/24.0D)*Math.pow(10.0D, (soundLevelNig[i]+10.0D)/10.0D))
-            lN[i] = soundLevelNig[i]
-        }
-
-
-        return lDen
+            l[i] = 10.0D*Math.log10( (24.0D/24.0D)*Math.pow(10.0D, soundLevelDay[i]/10.0D))
+        }*/
+        return attenuation
     }
 
     @Override

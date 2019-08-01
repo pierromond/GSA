@@ -16,6 +16,11 @@ import static org.junit.Assert.assertEquals
  */
 class DynamicProcessData {
 
+    protected  Map<Integer, Double>  PL = new HashMap<>()
+    protected  Map<Integer, Double>  SPEED = new HashMap<>()
+    protected  Map<Integer, Double>  TV = new HashMap<>()
+
+
     double[] getDroneLevel(String tablename, Sql sql, int t, int idSource) throws SQLException {
         double[] res_d = [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]
         // memes valeurs d e et n
@@ -42,22 +47,20 @@ class DynamicProcessData {
     return res_d
     }
 
-    double[] getCarsLevel(String tablename, Sql sql, int t, int idSource) throws SQLException {
+    double[] getCarsLevel(int t, int idSource) throws SQLException {
         double[] res_d = [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]
         double[] res_TV = [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]
         double[] res_PL = [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]
         def list = [63, 125, 250, 500, 1000, 2000, 4000, 8000]
         // memes valeurs d e et n
-        sql.eachRow('SELECT SPEED, DENSITY_TV, DENSITY_PL FROM ' + tablename +' WHERE PK = '+ idSource.toString()+';') { row ->
-            def SPEED = row[0]
-            def TV = row[1]
-            def PL = row[2]
+
+
             def random = Math.random()
-            if (random < TV){
+            if (random < TV.get(idSource)){
                 int kk=0
                 for (f in list) {
 
-                    double speed = SPEED
+                    double speed = SPEED.get(idSource)
                     int acc = 0
                     int FreqParam = f
                     double Temperature = 20
@@ -78,11 +81,10 @@ class DynamicProcessData {
                 }
 
             }
-            if (random < PL){
+            if (random < PL.get(idSource)){
                 int kk=0
                 for (f in list) {
-
-                    double speed = SPEED
+                    double speed = SPEED.get(idSource)
                     int acc = 0
                     int FreqParam = f
                     double Temperature = 20
@@ -114,9 +116,26 @@ class DynamicProcessData {
             }
 
 
-        }
+
 
         return res_d
     }
 
+
+
+    void setProbaTable(String tablename, Sql sql) {
+        //////////////////////
+        // Import file text
+        //////////////////////
+        int i_read = 0;
+        // Remplissage des variables avec le contenu du fichier plan d'exp
+        sql.eachRow('SELECT PK, SPEED, DENSITY_TV, DENSITY_PL FROM ' + tablename +';') { row ->
+            int pk = row[0].toInteger()
+            SPEED.put(pk,row[1].toFloat())
+            TV.put(pk,row[2].toFloat())
+            PL.put(pk,row[3].toFloat())
+
+        }
+
+    }
 }

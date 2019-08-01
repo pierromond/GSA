@@ -14,6 +14,7 @@ import java.util.concurrent.ConcurrentLinkedDeque
 @CompileStatic
 /**
  * Collect path computed by ComputeRays and store it into provided queue (with consecutive receiverId)
+ * remove receiverpath or put to keep rays or not
  */
 class PropagationPathStorage extends ComputeRaysOut {
     // Thread safe queue object
@@ -79,7 +80,7 @@ class PropagationPathStorage extends ComputeRaysOut {
                 pathPk.setIdReceiver((int)paths.receiverId)
                 pathPk.setIdSource((int)paths.sourceId)
                 paths.propagationPathList.add(pathPk)
-                receiverPaths.add(paths)
+                //receiverPaths.add(paths)
             }
             double[] aGlobalMeteo = propagationPathStorage.computeAttenuation(propagationPathStorage.genericMeteoData, sourceId, sourceLi, receiverId, propagationPath);
             if (aGlobalMeteo != null && aGlobalMeteo.length > 0)  {
@@ -95,8 +96,8 @@ class PropagationPathStorage extends ComputeRaysOut {
 
         @Override
         void finalizeReceiver(long receiverId) {
-            propagationPathStorage.pathQueue.addAll(receiverPaths)
-            receiverPaths.clear()
+            //propagationPathStorage.pathQueue.addAll(receiverPaths)
+            //receiverPaths.clear()
         }
 
         @Override

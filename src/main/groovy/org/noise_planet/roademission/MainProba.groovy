@@ -90,12 +90,12 @@ class MainProba {
         PointNoiseMap pointNoiseMap = new PointNoiseMap("BUILDINGS", "CARS", "RECEIVERS")
         pointNoiseMap.setSoilTableName("GROUND_TYPE")
         pointNoiseMap.setDemTable("TOPOGRAPHY")
-        pointNoiseMap.setMaximumPropagationDistance(120.0d) // 300 ICA sensitivity
-        pointNoiseMap.setMaximumReflectionDistance(50.0d) // 100 ICA sensitivity
+        pointNoiseMap.setMaximumPropagationDistance(250.0d) // 300 ICA sensitivity
+        pointNoiseMap.setMaximumReflectionDistance(100.0d) // 100 ICA sensitivity
         pointNoiseMap.setWallAbsorption(0.1d)
-        pointNoiseMap.soundReflectionOrder = 0
-        pointNoiseMap.computeHorizontalDiffraction = false
-        pointNoiseMap.computeVerticalDiffraction = false
+        pointNoiseMap.soundReflectionOrder = 1
+        pointNoiseMap.computeHorizontalDiffraction = true
+        pointNoiseMap.computeVerticalDiffraction = true
         pointNoiseMap.setHeightField("HAUTEUR")
         pointNoiseMap.setThreadCount(8) // Use 4 cpu threads
         pointNoiseMap.setReceiverHasAbsoluteZCoordinates(false)
@@ -106,6 +106,7 @@ class MainProba {
         pointNoiseMap.setPropagationProcessDataFactory(probaPropagationProcessDataFactory)
         pointNoiseMap.setComputeRaysOutFactory(storageFactory)
         storageFactory.setWorkingDir(workingDir)
+
 
         logger.info("Start time :" + df.format(new Date()))
 
@@ -133,7 +134,7 @@ class MainProba {
 
 
             DynamicProcessData dynamicProcessData = new DynamicProcessData()
-
+            dynamicProcessData.setProbaTable("CARS", sql)
 
 
             logger.info("End time :" + df.format(new Date()))
@@ -143,21 +144,29 @@ class MainProba {
             logger.info("Write results to csv file...")
             CSVWriter writer = new CSVWriter(new FileWriter(workingDir + "/ResultatsProba2.csv"))
 
-            for (int t=0;t<100;t++){
+            def t_old = -1
+            def idSource_old = -1
+            for (int t=1;t<100;t++){
                 Map<Integer, double[]> soundLevels = new HashMap<>()
+                Map<Integer, double[]> sourceLev = new HashMap<>()
+
                 for (int i=0;i< allLevels.size() ; i++) {
+
                     int idReceiver = (Integer) allLevels.get(i).receiverId
                     int idSource = (Integer) allLevels.get(i).sourceId
                     double[] soundLevel = allLevels.get(i).value
-                    double[] sourceLev = dynamicProcessData.getCarsLevel("CARS", sql, t,idSource)
+
+                    if (!sourceLev.containsKey(idSource)) {
+                        sourceLev.put(idSource, dynamicProcessData.getCarsLevel( t,idSource))
+                    }
 
 
-                    if (sourceLev[0]>0){
+                    if (sourceLev.get(idSource)[0]>0){
                         if (soundLevels.containsKey(idReceiver)) {
-                            soundLevel = ComputeRays.sumDbArray(sumLinearArray(soundLevel,sourceLev), soundLevels.get(idReceiver))
+                            soundLevel = ComputeRays.sumDbArray(sumLinearArray(soundLevel,sourceLev.get(idSource)), soundLevels.get(idReceiver))
                             soundLevels.replace(idReceiver, soundLevel)
                         } else {
-                            soundLevels.put(idReceiver, sumLinearArray(soundLevel,sourceLev))
+                            soundLevels.put(idReceiver, sumLinearArray(soundLevel,sourceLev.get(idSource)))
                         }
 
 

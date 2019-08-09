@@ -51,38 +51,32 @@ class MainProba {
 
         logger.info("Read building file")
         SHPRead.readShape(connection, "data/BUILDINGS_ZONE_CAPTEUR.shp", "BUILDINGS")
-        SHPRead.readShape(connection, "data/STUDY_AREA.shp", "STUDY_AREA")
         sql.execute("CREATE SPATIAL INDEX ON BUILDINGS(THE_GEOM)")
         logger.info("Building file loaded")
 
         // Load or create receivers points
         sql.execute("DROP TABLE IF EXISTS RECEIVERS")
-        if(!new File("data/RecepteursQuest.shp").exists()) {
-            DbUtilities.createReceiversFromBuildings(sql, "BUILDINGS", "STUDY_AREA")
-        } else {
-            SHPRead.readShape(connection, "data/RecepteursQuest.shp", "RECEIVERS")
-        }
-
+        SHPRead.readShape(connection, "data/RecepteursQuest3D.shp", "RECEIVERS")
         sql.execute("CREATE SPATIAL INDEX ON RECEIVERS(THE_GEOM)")
 
         // Load roads
         logger.info("Read road geometries and traffic")
         // ICA 2019 - Questionnaire
-        SHPRead.readShape(connection, "data/CARS.shp", "CARS")
+        SHPRead.readShape(connection, "data/CARS3D.shp", "CARS")
         sql.execute("CREATE SPATIAL INDEX ON CARS(THE_GEOM)")
         logger.info("Road file loaded")
 
         // Load ground type
         logger.info("Read ground surface categories")
-        SHPRead.readShape(connection, "data/land_use_zone_capteur4.shp", "GROUND_TYPE")
+        SHPRead.readShape(connection, "data/land_use_zone_capteur2D.shp", "GROUND_TYPE")
         sql.execute("CREATE SPATIAL INDEX ON GROUND_TYPE(THE_GEOM)")
         logger.info("Surface categories file loaded")
 
         // Load Topography
         logger.info("Read topography")
-        SHPRead.readShape(connection, "data/DEM_250.shp", "DEM")
+        SHPRead.readShape(connection, "data/DEM_2503D2.shp", "DEM")
         sql.execute("DROP TABLE TOPOGRAPHY if exists;")
-        sql.execute("CREATE TABLE TOPOGRAPHY AS SELECT ST_UpdateZ(THE_GEOM, CONTOUR) the_geom from DEM;")
+        sql.execute("CREATE TABLE TOPOGRAPHY AS SELECT PK2, THE_GEOM from DEM;")
         sql.execute("CREATE SPATIAL INDEX ON TOPOGRAPHY(THE_GEOM)")
         logger.info("Topography file loaded")
 
@@ -90,7 +84,7 @@ class MainProba {
         PointNoiseMap pointNoiseMap = new PointNoiseMap("BUILDINGS", "CARS", "RECEIVERS")
         pointNoiseMap.setSoilTableName("GROUND_TYPE")
         pointNoiseMap.setDemTable("TOPOGRAPHY")
-        pointNoiseMap.setMaximumPropagationDistance(250.0d) // 300 ICA sensitivity
+        pointNoiseMap.setMaximumPropagationDistance(500.0d) // 300 ICA sensitivity
         pointNoiseMap.setMaximumReflectionDistance(100.0d) // 100 ICA sensitivity
         pointNoiseMap.setWallAbsorption(0.1d)
         pointNoiseMap.soundReflectionOrder = 1
@@ -146,7 +140,7 @@ class MainProba {
 
             def t_old = -1
             def idSource_old = -1
-            for (int t=1;t<100;t++){
+            for (int t=1;t<900;t++){
                 Map<Integer, double[]> soundLevels = new HashMap<>()
                 Map<Integer, double[]> sourceLev = new HashMap<>()
 
@@ -265,7 +259,7 @@ class MainProba {
                 sum[i] = array1[i] + array2[i]
             }
 
-            return sum;
+            return sum
         }
     }
 

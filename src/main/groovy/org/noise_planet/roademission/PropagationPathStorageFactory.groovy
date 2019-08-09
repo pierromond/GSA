@@ -40,7 +40,6 @@ class PropagationPathStorageFactory implements PointNoiseMap.IComputeRaysOutFact
         geoJSONDocument.writeTopographic(inputData.freeFieldFinder.getTriangles(), inputData.freeFieldFinder.getVertices())
         geoJSONDocument.writeFooter()*/
         KMLDocument kmlDocument
-
         ZipOutputStream compressedDoc
         System.println( "Cellid" + inputData.cellId.toString())
         compressedDoc = new ZipOutputStream(new FileOutputStream(
@@ -97,7 +96,7 @@ class PropagationPathStorageFactory implements PointNoiseMap.IComputeRaysOutFact
             kmlDocument.setOffset(new Coordinate(0,0,0))
 
 
-           /* PropagationProcessPathData genericMeteoData = new PropagationProcessPathData()
+            /*PropagationProcessPathData genericMeteoData = new PropagationProcessPathData()
             genericMeteoData.setHumidity(70)
             genericMeteoData.setTemperature(10)
             ComputeRaysOut out = new ComputeRaysOut(false, genericMeteoData)

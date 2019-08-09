@@ -60,10 +60,10 @@ class Main {
 
         // Load or create receivers points
         sql.execute("DROP TABLE IF EXISTS RECEIVERS")
-        if(!new File("data/RecepteursQuest.shp").exists()) {
+        if(!new File("data/RecepteursQuest3D.shp").exists()) {
             DbUtilities.createReceiversFromBuildings(sql, "BUILDINGS", "STUDY_AREA")
         } else {
-            SHPRead.readShape(connection, "data/RecepteursQuest.shp", "RECEIVERS")
+            SHPRead.readShape(connection, "data/RecepteursQuest3D.shp", "RECEIVERS")
         }
 
         sql.execute("CREATE SPATIAL INDEX ON RECEIVERS(THE_GEOM)")
@@ -71,11 +71,11 @@ class Main {
         // Load roads
         logger.info("Read road geometries and traffic")
         // ICA 2019 - Sensitivity
-        SHPRead.readShape(connection, "data/Roads2407.shp", "ROADS2")
+        SHPRead.readShape(connection, "data/RoadsICA2.shp", "ROADS2")
 
 
         sql.execute("DROP TABLE ROADS if exists;")
-        sql.execute('CREATE TABLE ROADS AS SELECT CAST( OSM_ID AS INTEGER ) OSM_ID , ST_UpdateZ(THE_GEOM, 0.05) THE_GEOM, TMJA_D,TMJA_E,TMJA_N,\n' +
+        sql.execute('CREATE TABLE ROADS AS SELECT CAST( OSM_ID AS INTEGER ) OSM_ID , THE_GEOM, TMJA_D,TMJA_E,TMJA_N,\n' +
                         'PL_D,PL_E,PL_N,\n' +
                         'LV_SPEE,PV_SPEE, PVMT FROM ROADS2;')
 
@@ -87,15 +87,15 @@ class Main {
 
         // Load ground type
         logger.info("Read ground surface categories")
-        SHPRead.readShape(connection, "data/land_use_zone_capteur4.shp", "GROUND_TYPE")
+        SHPRead.readShape(connection, "data/land_use_zone_capteur2D.shp", "GROUND_TYPE")
         sql.execute("CREATE SPATIAL INDEX ON GROUND_TYPE(THE_GEOM)")
         logger.info("Surface categories file loaded")
 
         // Load Topography
         logger.info("Read topography")
-        SHPRead.readShape(connection, "data/DEM_250.shp", "DEM")
+        SHPRead.readShape(connection, "data/DEM_2503D2.shp", "DEM")
         sql.execute("DROP TABLE TOPOGRAPHY if exists;")
-        sql.execute("CREATE TABLE TOPOGRAPHY AS SELECT ST_UpdateZ(THE_GEOM, CONTOUR) the_geom from DEM;")
+        sql.execute("CREATE TABLE TOPOGRAPHY AS SELECT PK2, THE_GEOM from DEM;")
         sql.execute("CREATE SPATIAL INDEX ON TOPOGRAPHY(THE_GEOM)")
         logger.info("Topography file loaded")
 
@@ -103,8 +103,8 @@ class Main {
         PointNoiseMap pointNoiseMap = new PointNoiseMap("BUILDINGS", "ROADS", "RECEIVERS")
         pointNoiseMap.setSoilTableName("GROUND_TYPE")
         pointNoiseMap.setDemTable("TOPOGRAPHY")
-        pointNoiseMap.setMaximumPropagationDistance(300.0d)
-        pointNoiseMap.setMaximumReflectionDistance(100.0d)
+        pointNoiseMap.setMaximumPropagationDistance(150.0d)
+        pointNoiseMap.setMaximumReflectionDistance(75.0d)
         pointNoiseMap.setWallAbsorption(0.1d)
         pointNoiseMap.soundReflectionOrder = 1
         pointNoiseMap.computeHorizontalDiffraction = true
@@ -124,7 +124,7 @@ class Main {
 
         List<ComputeRaysOut.verticeSL> allLevels = new ArrayList<>()
         try {
-            storageFactory.openPathOutputFile(new File("rays2407.gz").absolutePath)
+            storageFactory.openPathOutputFile(new File("rays0908.gz").absolutePath)
             RootProgressVisitor progressLogger = new RootProgressVisitor(2, true, 1)
             pointNoiseMap.initialize(connection, progressLogger)
             progressLogger.endStep()
@@ -174,7 +174,7 @@ class Main {
             logger.info("End time :" + df.format(new Date()))
 
             logger.info("Write results to csv file...")
-            CSVWriter writer = new CSVWriter(new FileWriter(workingDir + "/Resultats2407.csv"))
+            CSVWriter writer = new CSVWriter(new FileWriter(workingDir + "/Resultats0908.csv"))
             for (Map.Entry<Integer, double[]> entry : soundLevels.entrySet()) {
                 Integer key = entry.getKey()
                 double[] value = entry.getValue()

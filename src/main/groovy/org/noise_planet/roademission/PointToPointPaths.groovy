@@ -41,12 +41,12 @@ class PointToPointPaths {
         receiverId = inputStream.readLong()
         sourceId = inputStream.readLong()
         li = inputStream.readDouble()
-        int propagationPathsListSize = inputStream.readInt();
-        propagationPathList.ensureCapacity(propagationPathsListSize);
+        int propagationPathsListSize = inputStream.readInt()
+        propagationPathList.ensureCapacity(propagationPathsListSize)
         for(int i=0; i < propagationPathsListSize; i++) {
-            PropagationPath propagationPath = new PropagationPath();
-            propagationPath.readStream(inputStream);
-            propagationPathList.add(propagationPath);
+            PropagationPath propagationPath = new PropagationPath()
+            propagationPath.readStream(inputStream)
+            propagationPathList.add(propagationPath)
         }
     }
 
